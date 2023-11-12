@@ -1,5 +1,5 @@
 import { Alchemy, Network } from 'alchemy-sdk';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import './App.css';
 
@@ -19,18 +19,79 @@ const settings = {
 //   https://docs.alchemy.com/reference/alchemy-sdk-api-surface-overview#api-surface
 const alchemy = new Alchemy(settings);
 
-function App() {
-  const [blockNumber, setBlockNumber] = useState();
+function TransactionIDInput({ onTransactionIDChange }) {
+  const [transactionID, setTransactionID] = useState('');
 
-  useEffect(() => {
-    async function getBlockNumber() {
-      setBlockNumber(await alchemy.core.getBlockNumber());
-    }
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setTransactionID(value);
 
-    getBlockNumber();
-  });
+    // Pass the updated transaction ID to the parent component
+    onTransactionIDChange(value);
+  };
 
-  return <div className="App">Block Number: {blockNumber}</div>;
+  return (
+    <div>
+      <label htmlFor="transactionID">Transaction ID:</label>
+      <input
+        type="number"
+        id="transactionID"
+        value={transactionID}
+        onChange={handleInputChange}
+        placeholder="Enter Transaction ID"
+      />
+    </div>
+  );
 }
 
-export default App;
+function App() {
+  const [blockNumber, setBlockNumber] = useState('');
+
+  const [blockWithTransactions, setBlockWithTransactions]=useState({});
+  const [transaction, setTransacion]=useState(0);
+  const [transactionDetails, setStransactionDetails]=useState({});
+  const handleTransactionIDChange = (value) => {
+    if(value<blockWithTransactions.transactions.length)
+    {
+      setTransacion(value);
+    }
+    else
+    {
+        console.log("no transaction with such id");
+    }
+  };
+
+  async function getBlockNumber() {
+    setBlockNumber(await alchemy.core.getBlockNumber());
+  //  console.log(blockNumber);
+  }
+async function getBlockWithTransactionList()
+{
+  setBlockWithTransactions(await alchemy.core.getBlockWithTransactions(blockNumber));
+//  console.log(blockWithTransactions.transactions);
+}
+
+
+async function getTransactionDetails()
+{
+  
+  setStransactionDetails(blockWithTransactions.transactions[transaction]);
+  return <div>{transactionDetails}</div>
+}
+   return (
+    <div>
+      <h1>Transaction ID Input</h1>
+      <button onClick={getBlockNumber}>Get latest block</button>
+      <button onClick={getBlockWithTransactionList}>get transaction</button>
+      <p>Block number is: {blockNumber}</p>
+      <TransactionIDInput onTransactionIDChange={handleTransactionIDChange} />
+      <div>
+      <button onClick={getTransactionDetails}>Get transaction</button>
+      {JSON.stringify(transactionDetails)}
+      </div>
+      
+    </div>
+  );
+}
+
+export {App, TransactionIDInput};
